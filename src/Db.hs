@@ -12,6 +12,7 @@
 {-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE BlockArguments #-}
 module Db where
 import Database.Persist
 import Database.Persist.Postgresql
@@ -21,13 +22,6 @@ import Data.Time (Day (ModifiedJulianDay))
 import qualified Database.Esqueleto as E
 import Control.Monad.Logger
 import qualified Types as T
-
-
-
-
-
-
-
 
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
@@ -89,13 +83,21 @@ updateUserFavMovie :: (BaseBackend backend ~ SqlBackend, MonadIO m,
  PersistQueryWrite backend) => Users -> ReaderT backend m ()
 updateUserFavMovie  user = updateWhere [UsersEmail ==. usersEmail user] [UsersFavouriteMovie =. usersFavouriteMovie user]
 
-
 getUserByEmail :: (BaseBackend backend ~ SqlBackend, MonadIO m,
  PersistQueryRead backend) =>String -> ReaderT backend m (Maybe (Entity Users))
 getUserByEmail email = selectFirst [UsersEmail ==. email] []
 
 checkIfMovieExists :: String -> SqlPersistM Bool
 checkIfMovieExists movie = E.existsBy $ MoviePrimaryKey movie
+
+getUser ::(BaseBackend backend ~ SqlBackend, MonadIO m,
+ PersistQueryRead backend) =>String -> String -> ReaderT backend m (Maybe (Entity Users))
+getUser email password = selectFirst [UsersEmail ==. email ,UsersPassword ==. password] []
+
+getAllUsers :: SqlPersistM [Entity Users]
+getAllUsers = E.select $
+                  E.from \users -> do
+                        return users
 
 queryfetchAllMovies :: IO [Entity Movie]
 queryfetchAllMovies = do
@@ -127,6 +129,16 @@ querygetUserByEmail :: String -> IO (Maybe (Entity Users))
 querygetUserByEmail email = do
                      runNoLoggingT $ withPostgresqlConn "host=localhost dbname=crud-haskell user=postgres password=Qwerty@052 port=5432" (\b -> do
                        runSqlConn (getUserByEmail email) b)
+
+querygetUser ::String -> String ->IO(Maybe (Entity Users))
+querygetUser email password =do
+                        runNoLoggingT $ withPostgresqlConn "host=localhost dbname=crud-haskell user=postgres password=Qwerty@052 port=5432" (\b -> do
+                              runSqlConn (getUser email password)b)
+
+querygetAllUsers :: IO [Entity Users]
+querygetAllUsers = do
+             runNoLoggingT $ withPostgresqlConn "host=localhost dbname=crud-haskell user=postgres password=Qwerty@052 port=5432" (\b -> do
+              liftIO (runSqlPersistM getAllUsers b))
 
 queryinsertUser :: T.User -> IO (Maybe ())
 queryinsertUser user = do

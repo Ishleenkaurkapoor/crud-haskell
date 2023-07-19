@@ -12,11 +12,10 @@
 module Main where
 import Api
 import Network.Wai.Handler.Warp
-import Db  
-import Servant.Server (Context ((:.), EmptyContext),serveWithContext)
+import Db
+import Servant.Server (Context (EmptyContext),serveWithContext)
 main :: IO ()
 main = do
        migrationScript
-       run 8081 (serveWithContext combinedProxy (EmptyContext) server10)
+       run 8081 (serveWithContext combinedProxy EmptyContext server10)
 
-       
