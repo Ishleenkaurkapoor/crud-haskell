@@ -49,13 +49,6 @@ Users
       deriving Show
 |]
 
--- loadData :: MonadIO m => ReaderT SqlBackend m ()
--- loadData = do
---   insert_ $ Movie "Harry Potter" "Fantasy" 5.6
---   insert_ $ Users "Aayush" 22 "aayush.k@gn.com" (ModifiedJulianDay 100000) "abcd" []
-
-
-
 
 fetchAllMovies :: SqlPersistM [Entity Movie]
 fetchAllMovies = E.select $
